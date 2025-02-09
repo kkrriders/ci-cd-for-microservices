@@ -1,0 +1,24 @@
+[
+    {
+      "orderId": "ORD001",
+      "customerName": "Rahul Sharma",
+      "items": [
+        { "product": "Veg Burger", "quantity": 2, "price": 99 },
+        { "product": "Margherita Pizza", "quantity": 1, "price": 199 }
+      ],
+      "totalAmount": 397,
+      "status": "Pending",
+      "createdAt": "2025-02-06T10:00:00Z"
+    },
+    {
+      "orderId": "ORD002",
+      "customerName": "Priya Singh",
+      "items": [
+        { "product": "Pasta Alfredo", "quantity": 1, "price": 179 }
+      ],
+      "totalAmount": 179,
+      "status": "Completed",
+      "createdAt": "2025-02-06T12:30:00Z"
+    }
+  ]
+  

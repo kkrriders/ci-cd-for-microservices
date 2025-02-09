@@ -1,31 +1,23 @@
+require("dotenv").config();
 const express = require("express");
+const mongoose = require("mongoose");
 
 const app = express();
-const PORT = process.env.PORT || 8083; // Use environment variable for flexibility
+const PORT = process.env.PORT || 8083;
+const MONGO_URI = process.env.MONGO_URI;
+
+// MongoDB Connection
+mongoose
+  .connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("📦 Connected to Orders MongoDB"))
+  .catch((err) => console.error("❌ MongoDB Connection Error:", err));
 
 app.use(express.json());
 
-// Sample orders data
-const orders = [
-  { id: 1, user: "John Doe", product: "Laptop", quantity: 1 },
-  { id: 2, user: "Jane Doe", product: "Mouse", quantity: 2 }
-];
-
-// Routes
 app.get("/", (req, res) => {
-  res.send("Welcome to the Orders Service!");
+  res.send("Welcome to the Catalog Service!");
 });
 
-app.get("/orders", (req, res) => {
-  res.json(orders);
-});
-
-app.get("/orders/:id", (req, res) => {
-  const order = orders.find((o) => o.id === parseInt(req.params.id));
-  order ? res.json(order) : res.status(404).send("Order not found");
-});
-
-// Start the service
 app.listen(PORT, () => {
-  console.log(`Orders Service running on port ${PORT}`);
+  console.log(`Catalog Service running on port ${PORT}`);
 });

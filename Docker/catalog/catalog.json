@@ -1,0 +1,24 @@
+[
+    {
+      "name": "Veg Burger",
+      "category": "Fast Food",
+      "price": 99,
+      "stock": 50,
+      "description": "Delicious vegetarian burger with fresh veggies and special sauce."
+    },
+    {
+      "name": "Margherita Pizza",
+      "category": "Pizza",
+      "price": 199,
+      "stock": 30,
+      "description": "Classic Italian pizza with fresh tomatoes, mozzarella, and basil."
+    },
+    {
+      "name": "Pasta Alfredo",
+      "category": "Pasta",
+      "price": 179,
+      "stock": 20,
+      "description": "Creamy white sauce pasta with rich flavors."
+    }
+  ]
+  
