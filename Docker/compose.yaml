@@ -1,14 +1,32 @@
-version: '3.8'
-
 services:
+  mongo:
+    image: mongo
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
   catalog:
-    build: ./catalog     # Path relative to docker-compose.yml
+    build: ./catalog
+    container_name: catalog-container
     ports:
       - "8082:8082"
+    depends_on:
+      - mongo
+    env_file:
+      - ./catalog/.env
 
   orders:
-    build: ./orders      # Path relative to docker-compose.yml
+    build: ./orders
+    container_name: orders-container
     ports:
       - "8083:8083"
     depends_on:
-      - catalog
+      - mongo
+    env_file:
+      - ./orders/.env
+
+volumes:
+  mongo-data:
