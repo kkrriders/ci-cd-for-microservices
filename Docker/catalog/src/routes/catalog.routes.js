@@ -1,18 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const catalogController = require('../controllers/catalog.controller');
+const productValidationRules = require('../middleware/validation.middleware');
 
-// Basic CRUD routes
-router.get('/products', catalogController.getAllProducts);
-router.get('/products/:id', catalogController.getProductById);
-router.post('/products', catalogController.createProduct);
-router.put('/products/:id', catalogController.updateProduct);
-router.delete('/products/:id', catalogController.deleteProduct);
+// Apply validation rules to routes
+router.get('/products', productValidationRules.queryValidation, catalogController.getAllProducts);
+router.get('/products/:id', productValidationRules.getProduct, catalogController.getProductById);
+router.post('/products', productValidationRules.createProduct, catalogController.createProduct);
+router.put('/products/:id', productValidationRules.updateProduct, catalogController.updateProduct);
+router.delete('/products/:id', productValidationRules.getProduct, catalogController.deleteProduct);
 
-// Advanced feature routes
-router.get('/search', catalogController.searchProducts);
-router.get('/stats', catalogController.getProductStats);
-router.post('/bulk-update', catalogController.bulkUpdateProducts);
-router.get('/check-availability', catalogController.checkAvailability);
+// Advanced feature routes with validation
+router.get('/check-availability', productValidationRules.checkAvailability, catalogController.checkAvailability);
+router.post('/bulk-update', productValidationRules.bulkUpdate, catalogController.bulkUpdateProducts);
 
 module.exports = router;

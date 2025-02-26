@@ -58,6 +58,9 @@ app.get('/', (req, res) => {
 // Health check routes
 app.use('/health', healthRoutes);
 
+// Error handling middleware (should be last)
+app.use(errorHandler);
+
 // Initialize database and start server
 const initializeApp = async () => {
     try {
