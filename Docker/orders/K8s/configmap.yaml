@@ -1,20 +1,20 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: catalog-config
+  name: orders-config
   namespace: microservices
   labels:
-    app: catalog
+    app: orders
     tier: backend
 data:
   # Application Configuration
   NODE_ENV: "production"
-  PORT: "8082"
+  PORT: "8083"
   
   # Database Configuration (connection string will be in secrets)
   MONGO_HOST: "mongodb-service"
   MONGO_PORT: "27017"
-  MONGO_DB_NAME: "catalog"
+  MONGO_DB_NAME: "orders"
   
   # Redis Configuration (connection string will be in secrets)
   REDIS_HOST: "redis-service"
@@ -25,7 +25,7 @@ data:
   LOG_FORMAT: "json"
   
   # Service Discovery
-  ORDERS_SERVICE_URL: "http://orders-service:8083"
+  CATALOG_SERVICE_URL: "http://catalog-service:8082"
   AUTH_SERVICE_URL: "http://auth-service:8081"
   
   # API Settings
@@ -41,4 +41,4 @@ data:
   CACHE_TTL: "3600"  # Time-to-live in seconds
   
   # CORS Settings
-  ALLOWED_ORIGINS: "https://frontend.example.com,https://admin.example.com"
+  ALLOWED_ORIGINS: "https://frontend.example.com,https://admin.example.com" 

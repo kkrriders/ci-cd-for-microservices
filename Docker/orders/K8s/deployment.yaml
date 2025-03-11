@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: catalog-deployment
+  name: orders-deployment
   namespace: microservices
   labels:
-    app: catalog
+    app: orders
     tier: backend
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: catalog
+      app: orders
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -19,16 +19,16 @@ spec:
   template:
     metadata:
       labels:
-        app: catalog
+        app: orders
         tier: backend
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/path: "/metrics"
-        prometheus.io/port: "8082"
+        prometheus.io/port: "8083"
     spec:
       containers:
-      - name: catalog
-        image: ${REGISTRY_URL}/catalog-service:${IMAGE_TAG}
+      - name: orders
+        image: ${REGISTRY_URL}/orders-service:${IMAGE_TAG}
         imagePullPolicy: Always
         resources:
           requests:
@@ -38,42 +38,42 @@ spec:
             cpu: "500m"
             memory: "512Mi"
         ports:
-        - containerPort: 8082
+        - containerPort: 8083
           name: http
         env:
         - name: NODE_ENV
           valueFrom:
             configMapKeyRef:
-              name: catalog-config
+              name: orders-config
               key: NODE_ENV
         - name: PORT
           valueFrom:
             configMapKeyRef:
-              name: catalog-config
+              name: orders-config
               key: PORT
         - name: MONGO_URI
           valueFrom:
             secretKeyRef:
-              name: catalog-secrets
+              name: orders-secrets
               key: MONGO_URI
         - name: REDIS_URI
           valueFrom:
             secretKeyRef:
-              name: catalog-secrets
+              name: orders-secrets
               key: REDIS_URI
         - name: LOG_LEVEL
           valueFrom:
             configMapKeyRef:
-              name: catalog-config
+              name: orders-config
               key: LOG_LEVEL
-        - name: ORDERS_SERVICE_URL
+        - name: CATALOG_SERVICE_URL
           valueFrom:
             configMapKeyRef:
-              name: catalog-config
-              key: ORDERS_SERVICE_URL
+              name: orders-config
+              key: CATALOG_SERVICE_URL
         envFrom:
         - configMapRef:
-            name: catalog-config
+            name: orders-config
         livenessProbe:
           httpGet:
             path: /health/liveness
@@ -126,8 +126,8 @@ spec:
                 - key: app
                   operator: In
                   values:
-                  - catalog
+                  - orders
               topologyKey: "kubernetes.io/hostname"
       terminationGracePeriodSeconds: 30
       imagePullSecrets:
-      - name: registry-credentials
+      - name: registry-credentials 

@@ -29,11 +29,6 @@ app.use(compression()); // Use compression for response bodies
 app.use(cors()); // Enable CORS
 app.use(limiter); // Apply rate limiting
 
-// MongoDB Connection
-connectDB()
-    .then(() => logger.info("📦 Connected to orders MongoDB"))
-    .catch((err) => logger.error("❌ MongoDB Connection Error:", err));
-
 // Redis Client
 const redisClient = Redis.createClient({
     url: process.env.REDIS_URI
@@ -45,25 +40,6 @@ redisClient.on('connect', () => logger.info('📦 Connected to Redis'));
 (async () => {
     await redisClient.connect();
 })();
-
-// Define Orders Schema
-const orderSchema = new mongoose.Schema(
-  {
-    orderId: String,
-    customerName: String,
-    items: [{
-      product: String,
-      quantity: Number,
-      price: Number
-    }],
-    totalAmount: Number,
-    status: { type: String, default: "Pending" },
-    createdAt: { type: Date, default: Date.now }
-  },
-  { collection: "orders_db" }
-);
-
-const Order = mongoose.model("Order", orderSchema);
 
 // Define base route
 app.get("/", (req, res) => {
