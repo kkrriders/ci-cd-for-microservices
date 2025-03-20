@@ -11,6 +11,7 @@ const compression = require('compression'); // Import compression for response c
 const cors = require('cors'); // Import CORS for cross-origin requests
 const rateLimit = require('express-rate-limit'); // Import rate limiting
 const healthRoutes = require('./routes/health.routes');
+const swagger = require('./config/swagger');
 
 const app = express();
 const PORT = process.env.PORT || 8083;
@@ -49,6 +50,9 @@ app.get("/", (req, res) => {
 // Use order routes
 app.use('/api/v1/orders', orderRoutes);
 
+// Swagger Documentation
+app.use('/api/docs', swagger.serve, swagger.setup);
+
 // Health check routes
 app.use('/health', healthRoutes);
 
@@ -65,6 +69,7 @@ const initializeApp = async () => {
         app.listen(PORT, () => {
             logger.info(`🚀 Orders Service running on port ${PORT}`);
             logger.info(`Health check available at http://localhost:${PORT}/health`);
+            logger.info(`API Documentation available at http://localhost:${PORT}/api/docs`);
         });
 
     } catch (error) {

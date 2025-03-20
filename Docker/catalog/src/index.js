@@ -10,6 +10,7 @@ const { connectDB, createIndexes } = require('./config/database');
 const logger = require('./config/logger');
 const healthRoutes = require('./routes/health.routes');
 const { errorHandler } = require('./middleware/error.middleware');
+const swagger = require('./config/swagger');
 
 const app = express();
 const PORT = process.env.PORT || 8082;
@@ -27,24 +28,20 @@ app.use(helmet());
 app.use(compression());
 app.use(express.urlencoded({ extended: true }));
 app.use(limiter);
+
+// API Routes
 app.use('/api/v1/catalog', require('./routes/catalog.routes'));
 
-// MongoDB Connection
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log('📦 Connected to MongoDB'))
-  .catch((err) => console.error('❌ MongoDB Connection Error:', err));
+// Swagger Documentation
+app.use('/api/docs', swagger.serve, swagger.setup);
 
 // Redis Client
 const redisClient = Redis.createClient({
   url: process.env.REDIS_URI
 });
 
-redisClient.on('error', (err) => console.log('Redis Client Error', err));
-redisClient.on('connect', () => console.log('📦 Connected to Redis'));
+redisClient.on('error', (err) => logger.error('Redis Client Error', err));
+redisClient.on('connect', () => logger.info('📦 Connected to Redis'));
 
 (async () => {
   await redisClient.connect();
@@ -74,6 +71,7 @@ const initializeApp = async () => {
         app.listen(PORT, () => {
             logger.info(`🚀 Catalog Service running on port ${PORT}`);
             logger.info(`Health check available at http://localhost:${PORT}/health`);
+            logger.info(`API Documentation available at http://localhost:${PORT}/api/docs`);
         });
 
     } catch (error) {
