@@ -1,0 +1,24 @@
+{"level":"info","message":"📦 Connected to Redis","service":"catalog-service","timestamp":"2025-03-21 14:12:41"}
+{"level":"info","message":"MongoDB Connected: mongo","service":"catalog-service","timestamp":"2025-03-21 14:12:44"}
+{"level":"info","message":"Database indexes created successfully","service":"catalog-service","timestamp":"2025-03-21 14:12:44"}
+{"level":"info","message":"🚀 Catalog Service running on port 8082","service":"catalog-service","timestamp":"2025-03-21 14:12:44"}
+{"level":"info","message":"Health check available at http://localhost:8082/health","service":"catalog-service","timestamp":"2025-03-21 14:12:44"}
+{"level":"info","message":"API Documentation available at http://localhost:8082/api/docs","service":"catalog-service","timestamp":"2025-03-21 14:12:44"}
+{"level":"info","message":"📦 Connected to Redis","service":"catalog-service","timestamp":"2025-03-22 16:36:57"}
+{"level":"info","message":"MongoDB Connected: mongo","service":"catalog-service","timestamp":"2025-03-22 16:36:57"}
+{"level":"info","message":"Database indexes created successfully","service":"catalog-service","timestamp":"2025-03-22 16:36:57"}
+{"level":"info","message":"🚀 Catalog Service running on port 8082","service":"catalog-service","timestamp":"2025-03-22 16:36:57"}
+{"level":"info","message":"Health check available at http://localhost:8082/health","service":"catalog-service","timestamp":"2025-03-22 16:36:57"}
+{"level":"info","message":"API Documentation available at http://localhost:8082/api/docs","service":"catalog-service","timestamp":"2025-03-22 16:36:57"}
+{"level":"info","message":"📦 Connected to Redis","service":"catalog-service","timestamp":"2025-03-22 16:46:32"}
+{"level":"info","message":"MongoDB Connected: mongo","service":"catalog-service","timestamp":"2025-03-22 16:46:32"}
+{"level":"info","message":"Database indexes created successfully","service":"catalog-service","timestamp":"2025-03-22 16:46:32"}
+{"level":"info","message":"🚀 Catalog Service running on port 8082","service":"catalog-service","timestamp":"2025-03-22 16:46:32"}
+{"level":"info","message":"Health check available at http://localhost:8082/health","service":"catalog-service","timestamp":"2025-03-22 16:46:32"}
+{"level":"info","message":"API Documentation available at http://localhost:8082/api/docs","service":"catalog-service","timestamp":"2025-03-22 16:46:32"}
+{"level":"info","message":"📦 Connected to Redis","service":"catalog-service","timestamp":"2025-03-22 16:58:54"}
+{"level":"info","message":"MongoDB Connected: mongo","service":"catalog-service","timestamp":"2025-03-22 16:58:57"}
+{"level":"info","message":"Database indexes created successfully","service":"catalog-service","timestamp":"2025-03-22 16:58:57"}
+{"level":"info","message":"🚀 Catalog Service running on port 8082","service":"catalog-service","timestamp":"2025-03-22 16:58:57"}
+{"level":"info","message":"Health check available at http://localhost:8082/health","service":"catalog-service","timestamp":"2025-03-22 16:58:57"}
+{"level":"info","message":"API Documentation available at http://localhost:8082/api/docs","service":"catalog-service","timestamp":"2025-03-22 16:58:57"}

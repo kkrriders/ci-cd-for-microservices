@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG NODE_VERSION=23.7.0
+ARG NODE_VERSION=20.10.0
 FROM node:${NODE_VERSION}-alpine
 
 ENV NODE_ENV=production
@@ -8,7 +8,8 @@ WORKDIR /usr/src/app
 
 # Copy package files and install dependencies
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+# Using regular npm install instead of npm ci to resolve dependency conflicts
+RUN npm install --omit=dev
 
 # Copy application source code
 COPY . .
@@ -16,7 +17,7 @@ COPY . .
 # Use non-root user
 USER node
 
-# Expose Orders API on port 8081
+# Expose Orders API on port 8083
 EXPOSE 8083
 
 # Start the service
