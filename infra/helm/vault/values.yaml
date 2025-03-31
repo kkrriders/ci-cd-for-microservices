@@ -1,0 +1,43 @@
+server:
+  dev:
+    enabled: false
+  standalone:
+    enabled: true
+  ha:
+    enabled: false
+  
+  # Configure Kubernetes auth method
+  extraArgs: "-dev-listen-address=0.0.0.0:8200"
+  
+  # Configure Kubernetes service account
+  serviceAccount:
+    create: true
+    name: vault
+    
+  # Configure Vault UI
+  ui:
+    enabled: true
+    serviceType: ClusterIP
+    
+  # Configure storage backend
+  dataStorage:
+    enabled: true
+    size: 10Gi
+    storageClass: standard
+    
+  # Configure listener
+  extraEnvironmentVars:
+    VAULT_ADDR: "https://vault.microservices:8200"
+    VAULT_SKIP_VERIFY: "true"
+    
+  # Configure TLS
+  extraVolumes:
+    - type: secret
+      name: vault-server-tls
+      path: /vault/tls
+      
+injector:
+  enabled: true
+  
+  # Configure sidecar injection
+  externalVaultAddr: "https://vault.microservices:8200" 

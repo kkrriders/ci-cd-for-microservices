@@ -1,0 +1,40 @@
+falco:
+  # Enable/disable monitoring Kubernetes audit logs 
+  k8sAuditRulesEnabled: true
+  
+  # Enable alerting of suspicious activity
+  jsonOutput: true
+  
+  # Custom rules for API server
+  customRules:
+    microservices-rules.yaml: |-
+      - rule: Unauthorized Access to Microservices
+        desc: Detects unauthorized access to microservices
+        condition: >
+          k8s.ns.name="microservices" and
+          kevt.verb="create" and
+          kevt.resource=pod and
+          not ka.user.name contains "system:" and
+          not ka.user.name contains "svc-account"
+        output: >
+          Unauthorized access to microservices detected
+          (user=%ka.user.name resource=%ka.target.resource
+          namespace=%ka.target.namespace)
+        priority: WARNING
+        tags: [k8s, audit]
+
+  # Kubernetes webhook configuration
+  webserver:
+    enabled: true
+    svc:
+      type: ClusterIP
+    
+  # Set Falco to run in a secure pod
+  podSecurityContext:
+    runAsUser: 1000
+    fsGroup: 1000
+  
+  # Enable alert processing
+  programOutput:
+    enabled: true
+    program: /usr/bin/falco-slack-notifier.sh 

@@ -16,6 +16,7 @@ A comprehensive e-commerce platform built using a microservices architecture. Th
 - [Development Workflow](#development-workflow)
 - [Kubernetes Deployment](#kubernetes-deployment)
 - [CI/CD Integration](#cicd-integration)
+- [Security](#security)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 
@@ -293,6 +294,43 @@ This project can be integrated with CI/CD pipelines using GitHub Actions, Jenkin
 5. **Deploy**: Deploy to Kubernetes
 
 Example GitHub Actions workflow files are provided in the `.github/workflows` directory.
+
+## Security
+
+Our microservices architecture implements several layers of security:
+
+### Container Security
+- Multi-stage Docker builds to minimize image size and attack surface
+- Non-root container execution with principle of least privilege
+- Container vulnerability scanning with Trivy integrated into CI/CD pipeline
+- Read-only filesystem for runtime containers where possible
+
+### Secret Management
+- HashiCorp Vault integration for dynamic secret generation and management
+- Kubernetes Secrets integration for sensitive information
+- No hardcoded credentials in code or images
+
+### Network Security
+- Service mesh (Istio) with mutual TLS encryption between services
+- Kubernetes Network Policies to restrict service-to-service communication
+- API Gateway with rate limiting and authentication
+
+### Authentication & Authorization
+- JWT-based API authentication
+- OAuth2 integration for identity management
+- RBAC (Role-Based Access Control) for Kubernetes resources
+
+### Runtime Security
+- Restricted Pod Security Context
+- Falco for real-time security monitoring
+- Regular security scanning with compliance reporting
+
+### Compliance
+- Automated security scanning reports
+- Regular dependency vulnerability audits
+- OWASP Top 10 protection measures
+
+For detailed security implementation, see the [Security Documentation](docs/SECURITY.md).
 
 ## Troubleshooting
 
