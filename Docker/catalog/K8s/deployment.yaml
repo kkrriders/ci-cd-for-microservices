@@ -46,7 +46,7 @@ spec:
         fsGroup: 1001
       containers:
       - name: catalog
-        image: ${REGISTRY_URL}/catalog-service:${IMAGE_TAG}
+        image: "$(REGISTRY_URL)/catalog-service:$(IMAGE_TAG)"
         imagePullPolicy: Always
         securityContext:
           allowPrivilegeEscalation: false
@@ -76,6 +76,18 @@ spec:
             configMapKeyRef:
               name: catalog-config
               key: PORT
+        - name: REGISTRY_URL
+          valueFrom:
+            configMapKeyRef:
+              name: catalog-config
+              key: REGISTRY_URL
+              optional: true
+        - name: IMAGE_TAG
+          valueFrom:
+            configMapKeyRef:
+              name: catalog-config
+              key: IMAGE_TAG
+              optional: true
         envFrom:
         - configMapRef:
             name: catalog-config
@@ -83,7 +95,7 @@ spec:
         - name: tmp-volume
           mountPath: /tmp
         - name: logs-volume
-          mountPath: /app/logs
+          mountPath: /usr/src/app/logs
         - name: vault-secrets
           mountPath: /vault/secrets
           readOnly: true

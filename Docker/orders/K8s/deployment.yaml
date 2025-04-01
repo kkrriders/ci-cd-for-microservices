@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: orders
-        image: ${REGISTRY_URL}/orders-service:${IMAGE_TAG}
+        image: "$(REGISTRY_URL)/orders-service:$(IMAGE_TAG)"
         imagePullPolicy: Always
         resources:
           requests:
@@ -71,6 +71,18 @@ spec:
             configMapKeyRef:
               name: orders-config
               key: CATALOG_SERVICE_URL
+        - name: REGISTRY_URL
+          valueFrom:
+            configMapKeyRef:
+              name: orders-config
+              key: REGISTRY_URL
+              optional: true
+        - name: IMAGE_TAG
+          valueFrom:
+            configMapKeyRef:
+              name: orders-config
+              key: IMAGE_TAG
+              optional: true
         envFrom:
         - configMapRef:
             name: orders-config
@@ -102,7 +114,7 @@ spec:
         - name: tmp-volume
           mountPath: /tmp
         - name: logs-volume
-          mountPath: /app/logs
+          mountPath: /usr/src/app/logs
         securityContext:
           allowPrivilegeEscalation: false
           runAsNonRoot: true

@@ -28,13 +28,22 @@ server:
   # Configure listener
   extraEnvironmentVars:
     VAULT_ADDR: "https://vault.microservices:8200"
-    VAULT_SKIP_VERIFY: "true"
+    # Only skip verification in development, not in production
+    VAULT_SKIP_VERIFY: "false"
     
   # Configure TLS
   extraVolumes:
     - type: secret
       name: vault-server-tls
       path: /vault/tls
+  
+  # Proper TLS configuration
+  listener:
+    tcp:
+      tls:
+        enabled: true
+        certFile: "/vault/tls/tls.crt"
+        keyFile: "/vault/tls/tls.key"
       
 injector:
   enabled: true

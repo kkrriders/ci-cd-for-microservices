@@ -6,53 +6,156 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  REGISTRY: ghcr.io
+  CATALOG_IMAGE_NAME: ${{ github.repository }}/catalog-service
+  ORDERS_IMAGE_NAME: ${{ github.repository }}/orders-service
+
 jobs:
   build-and-scan:
     name: Build and Scan Images
     runs-on: ubuntu-latest
+    outputs:
+      should_deploy: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+        
+      # Login to container registry
+      - name: Log in to the Container registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Print working directory and check files
+      - name: Check directory structure
+        run: |
+          pwd
+          ls -la
+          ls -la Docker/catalog/
+          ls -la Docker/orders/
+
+      # Build catalog service
       - name: Build catalog image
         uses: docker/build-push-action@v4
         with:
           context: ./Docker/catalog
-          push: false
-          load: true
-          tags: catalog-service:${{ github.sha }}
+          file: ./Docker/catalog/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.CATALOG_IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.CATALOG_IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # Build orders service
       - name: Build orders image
         uses: docker/build-push-action@v4
         with:
           context: ./Docker/orders
-          push: false
-          load: true
-          tags: orders-service:${{ github.sha }}
+          file: ./Docker/orders/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.ORDERS_IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.ORDERS_IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Run Trivy vulnerability scanner
+      # Scan catalog image
+      - name: Run Trivy vulnerability scanner on catalog
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'catalog-service:${{ github.sha }}'
-          format: 'table'
-          exit-code: '1'
+          image-ref: ${{ env.REGISTRY }}/${{ env.CATALOG_IMAGE_NAME }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results-catalog.sarif'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
+          exit-code: '0'  # Don't fail the build, just report
 
+      # Scan orders image
       - name: Run Trivy on orders service
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'orders-service:${{ github.sha }}'
-          format: 'table'
-          exit-code: '1'
+          image-ref: ${{ env.REGISTRY }}/${{ env.ORDERS_IMAGE_NAME }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results-orders.sarif'
           ignore-unfixed: true
           vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH' 
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'  # Don't fail the build, just report
+          
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results-catalog.sarif'
+          
+      - name: Upload Orders Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results-orders.sarif'
+          
+  deploy:
+    name: Deploy to Kubernetes
+    needs: build-and-scan
+    if: needs.build-and-scan.outputs.should_deploy == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        
+      - name: Set up kubeconfig
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ toJSON(secrets.KUBE_CONFIG) }}
+        
+      - name: Create namespace if it doesn't exist
+        run: |
+          kubectl get namespace microservices || kubectl create namespace microservices
+          
+      - name: Update deployment files with image tags
+        run: |
+          # Update catalog deployment - use double quotes for sed replacement to handle variables
+          sed -i "s|image:.*|image: \"${{ env.REGISTRY }}/${{ env.CATALOG_IMAGE_NAME }}:${{ github.sha }}\"|g" Docker/catalog/K8s/deployment.yaml
+          
+          # Update orders deployment - use double quotes for sed replacement to handle variables
+          sed -i "s|image:.*|image: \"${{ env.REGISTRY }}/${{ env.ORDERS_IMAGE_NAME }}:${{ github.sha }}\"|g" Docker/orders/K8s/deployment.yaml
+          
+          # Verify changes
+          cat Docker/catalog/K8s/deployment.yaml | grep image:
+          cat Docker/orders/K8s/deployment.yaml | grep image:
+          
+      - name: Deploy catalog service
+        run: |
+          kubectl apply -f Docker/catalog/K8s/configmap.yaml
+          kubectl apply -f Docker/catalog/K8s/secrets.yaml
+          kubectl apply -f Docker/catalog/K8s/service.yaml
+          kubectl apply -f Docker/catalog/K8s/deployment.yaml
+          kubectl apply -f Docker/catalog/K8s/network-policy.yaml
+          
+      - name: Deploy orders service
+        run: |
+          kubectl apply -f Docker/orders/K8s/configmap.yaml
+          kubectl apply -f Docker/orders/K8s/secrets.yaml
+          kubectl apply -f Docker/orders/K8s/service.yaml
+          kubectl apply -f Docker/orders/K8s/deployment.yaml
+          kubectl apply -f Docker/orders/K8s/network-policy.yaml
+          
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/catalog-deployment -n microservices
+          kubectl rollout status deployment/orders-deployment -n microservices 

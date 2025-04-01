@@ -42,3 +42,7 @@ data:
   
   # CORS Settings
   ALLOWED_ORIGINS: "https://frontend.example.com,https://admin.example.com"
+  
+  # Deployment Configuration
+  REGISTRY_URL: "ghcr.io/username"
+  IMAGE_TAG: "latest"
