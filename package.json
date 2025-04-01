@@ -1,0 +1,44 @@
+{
+  "name": "microservices-ecommerce",
+  "version": "1.0.0",
+  "description": "Microservices E-commerce Application",
+  "scripts": {
+    "start": "docker compose up",
+    "start:dev": "docker compose up -d",
+    "stop": "docker compose down",
+    "dev": "concurrently \"npm run dev:catalog\" \"npm run dev:orders\"",
+    "start:catalog": "cd Docker/catalog && npm start",
+    "start:orders": "cd Docker/orders && npm start",
+    "dev:catalog": "cd Docker/catalog && npm run dev",
+    "dev:orders": "cd Docker/orders && npm run dev",
+    "install:catalog": "cd Docker/catalog && npm install",
+    "install:orders": "cd Docker/orders && npm install",
+    "install:all": "npm run install:catalog && npm run install:orders",
+    "lint:catalog": "cd Docker/catalog && npm run lint",
+    "lint:orders": "cd Docker/orders && npm run lint",
+    "lint:all": "npm run lint:catalog && npm run lint:orders",
+    "test:catalog": "cd Docker/catalog && npm test",
+    "test:orders": "cd Docker/orders && npm test",
+    "test:all": "npm run test:catalog && npm run test:orders"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/microservices-ecommerce.git"
+  },
+  "keywords": [
+    "microservices",
+    "nodejs",
+    "docker",
+    "kubernetes",
+    "ecommerce"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "private": true,
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+} 

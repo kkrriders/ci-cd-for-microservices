@@ -129,26 +129,43 @@ A web-based MongoDB admin interface for easier database management during develo
 - Git
 - Kubernetes cluster (for production deployment)
 
-### Running Locally with Docker Compose
+### Quick Start
+
+#### Using Docker Compose (Recommended)
+
+The easiest way to run the application is using Docker Compose:
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/microservices-ecommerce.git
-cd microservices-ecommerce
-
 # Start all services
-docker-compose up -d
+npm start
 
-# View logs
-docker-compose logs -f
+# Start all services in detached mode
+npm run start:dev
+
+# Stop all services
+npm run stop
 ```
 
-This will start:
-- Catalog Service (http://localhost:8082)
-- Orders Service (http://localhost:8083)
-- MongoDB (localhost:27017)
-- Redis (localhost:6379)
-- Mongo Express (http://localhost:8081)
+#### Running Individual Services
+
+You can also run each service individually:
+
+```bash
+# Install dependencies for all services
+npm run install:all
+
+# Start catalog service
+npm run start:catalog
+
+# Start orders service
+npm run start:orders
+
+# Run catalog service in development mode
+npm run dev:catalog
+
+# Run orders service in development mode
+npm run dev:orders
+```
 
 ### Environment Variables
 
