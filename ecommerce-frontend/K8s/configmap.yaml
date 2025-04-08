@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: microservices
+  labels:
+    app: ecommerce
+    tier: frontend
+data:
+  # Application Configuration
+  NODE_ENV: "production"
+  
+  # API Services URLs
+  CATALOG_API_URL: "http://catalog-service.microservices.svc.cluster.local:8082/api/v1/catalog"
+  ORDERS_API_URL: "http://orders-service.microservices.svc.cluster.local:8083/api/v1/orders"
+  API_URL: "http://api-gateway.microservices.svc.cluster.local"
+  
+  # Deployment Configuration
+  REGISTRY_URL: "ghcr.io/username"
+  IMAGE_TAG: "latest"
+  
+  # Feature Flags
+  ENABLE_ANALYTICS: "true"
+  
+  # CORS Settings
+  ALLOWED_ORIGINS: "https://ecommerce.example.com" 

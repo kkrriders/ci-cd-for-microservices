@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: frontend-network-policy
+  namespace: microservices
+spec:
+  podSelector:
+    matchLabels:
+      app: ecommerce
+      tier: frontend
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    # Allow traffic from the API Gateway/Ingress controller
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 3000
+  egress:
+  - to:
+    # Allow DNS resolution
+    - namespaceSelector: {}
+      podSelector: {}
+    ports:
+    - protocol: UDP
+      port: 53
+  - to:
+    # Allow traffic to Catalog Service
+    - podSelector:
+        matchLabels:
+          app: catalog
+    ports:
+    - protocol: TCP
+      port: 8082
+  - to:
+    # Allow traffic to Orders Service
+    - podSelector:
+        matchLabels:
+          app: orders
+    ports:
+    - protocol: TCP
+      port: 8083 

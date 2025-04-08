@@ -10,6 +10,8 @@ env:
   REGISTRY: ghcr.io
   CATALOG_IMAGE_NAME: ${{ github.repository }}/catalog-service
   ORDERS_IMAGE_NAME: ${{ github.repository }}/orders-service
+  FRONTEND_IMAGE_NAME: ${{ github.repository }}/frontend
+  K8S_NAMESPACE: microservices
 
 jobs:
   build-and-scan:
@@ -41,6 +43,7 @@ jobs:
           ls -la
           ls -la Docker/catalog/
           ls -la Docker/orders/
+          ls -la ecommerce-frontend/
 
       # Build catalog service
       - name: Build catalog image
@@ -69,40 +72,77 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.ORDERS_IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          
+      # Build frontend service
+      - name: Build frontend image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./ecommerce-frontend
+          file: ./ecommerce-frontend/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          load: ${{ github.event_name == 'pull_request' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      # Scan catalog image
+      # Scan catalog image only if it's pushed or loaded
       - name: Run Trivy vulnerability scanner on catalog
+        if: github.event_name != 'pull_request' || github.event_name == 'pull_request'
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.CATALOG_IMAGE_NAME }}:${{ github.sha }}
+          image-ref: ${{ (github.event_name != 'pull_request' && env.REGISTRY || 'localhost') }}/${{ env.CATALOG_IMAGE_NAME }}:${{ github.sha }}
           format: 'sarif'
           output: 'trivy-results-catalog.sarif'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
-          exit-code: '0'  # Don't fail the build, just report
+          exit-code: '1'  # Fail the build if critical vulnerabilities are found
 
-      # Scan orders image
+      # Scan orders image only if it's pushed or loaded
       - name: Run Trivy on orders service
+        if: github.event_name != 'pull_request' || github.event_name == 'pull_request'
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.ORDERS_IMAGE_NAME }}:${{ github.sha }}
+          image-ref: ${{ (github.event_name != 'pull_request' && env.REGISTRY || 'localhost') }}/${{ env.ORDERS_IMAGE_NAME }}:${{ github.sha }}
           format: 'sarif'
           output: 'trivy-results-orders.sarif'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
-          exit-code: '0'  # Don't fail the build, just report
+          exit-code: '1'  # Fail the build if critical vulnerabilities are found
+          
+      # Scan frontend image only if it's pushed or loaded
+      - name: Run Trivy on frontend image
+        if: github.event_name != 'pull_request' || github.event_name == 'pull_request'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ (github.event_name != 'pull_request' && env.REGISTRY || 'localhost') }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results-frontend.sarif'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'  # Fail the build if critical vulnerabilities are found
           
       - name: Upload Trivy scan results to GitHub Security tab
+        if: success() && github.event_name != 'pull_request'
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: 'trivy-results-catalog.sarif'
           
       - name: Upload Orders Trivy scan results
+        if: success() && github.event_name != 'pull_request'
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: 'trivy-results-orders.sarif'
+          
+      - name: Upload Frontend Trivy scan results
+        if: success() && github.event_name != 'pull_request'
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results-frontend.sarif'
           
   deploy:
     name: Deploy to Kubernetes
@@ -125,37 +165,62 @@ jobs:
         
       - name: Create namespace if it doesn't exist
         run: |
-          kubectl get namespace microservices || kubectl create namespace microservices
+          kubectl get namespace ${{ env.K8S_NAMESPACE }} || kubectl create namespace ${{ env.K8S_NAMESPACE }}
           
-      - name: Update deployment files with image tags
+      - name: Create registry secret
         run: |
-          # Update catalog deployment - use double quotes for sed replacement to handle variables
-          sed -i "s|image:.*|image: \"${{ env.REGISTRY }}/${{ env.CATALOG_IMAGE_NAME }}:${{ github.sha }}\"|g" Docker/catalog/K8s/deployment.yaml
+          kubectl create secret docker-registry registry-credentials \
+            --namespace ${{ env.K8S_NAMESPACE }} \
+            --docker-server=${{ env.REGISTRY }} \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.GITHUB_TOKEN }} \
+            --dry-run=client -o yaml | kubectl apply -f -
           
-          # Update orders deployment - use double quotes for sed replacement to handle variables
-          sed -i "s|image:.*|image: \"${{ env.REGISTRY }}/${{ env.ORDERS_IMAGE_NAME }}:${{ github.sha }}\"|g" Docker/orders/K8s/deployment.yaml
+      - name: Update deployment image tags
+        run: |
+          # Create sed patterns for image substitution
+          CATALOG_IMAGE="${{ env.REGISTRY }}/${{ env.CATALOG_IMAGE_NAME }}:${{ github.sha }}"
+          ORDERS_IMAGE="${{ env.REGISTRY }}/${{ env.ORDERS_IMAGE_NAME }}:${{ github.sha }}"
+          FRONTEND_IMAGE="${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE_NAME }}:${{ github.sha }}"
           
-          # Verify changes
-          cat Docker/catalog/K8s/deployment.yaml | grep image:
-          cat Docker/orders/K8s/deployment.yaml | grep image:
+          # Create temporary deployment files with proper image references
+          sed 's|image: "$(REGISTRY_URL)/catalog-service:$(IMAGE_TAG)"|image: "'$CATALOG_IMAGE'"|g' Docker/catalog/K8s/deployment.yaml > catalog-deployment.yaml
+          sed 's|image: "$(REGISTRY_URL)/orders-service:$(IMAGE_TAG)"|image: "'$ORDERS_IMAGE'"|g' Docker/orders/K8s/deployment.yaml > orders-deployment.yaml
+          sed 's|image: "$(REGISTRY_URL)/ecommerce-frontend:$(IMAGE_TAG)"|image: "'$FRONTEND_IMAGE'"|g' ecommerce-frontend/K8s/deployment.yaml > frontend-deployment.yaml
+          
+          # Output the image values for debugging
+          echo "Using CATALOG_IMAGE: $CATALOG_IMAGE"
+          echo "Using ORDERS_IMAGE: $ORDERS_IMAGE"
+          echo "Using FRONTEND_IMAGE: $FRONTEND_IMAGE"
           
       - name: Deploy catalog service
         run: |
-          kubectl apply -f Docker/catalog/K8s/configmap.yaml
-          kubectl apply -f Docker/catalog/K8s/secrets.yaml
-          kubectl apply -f Docker/catalog/K8s/service.yaml
-          kubectl apply -f Docker/catalog/K8s/deployment.yaml
-          kubectl apply -f Docker/catalog/K8s/network-policy.yaml
+          kubectl apply -f Docker/catalog/K8s/configmap.yaml -n ${{ env.K8S_NAMESPACE }}
+          # Create Kubernetes secrets securely using environment variables or Vault
+          # kubectl create secret generic catalog-secrets --from-literal=DATABASE_PASSWORD=${{ secrets.CATALOG_DB_PASSWORD }} -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f Docker/catalog/K8s/service.yaml -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f catalog-deployment.yaml -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f Docker/catalog/K8s/network-policy.yaml -n ${{ env.K8S_NAMESPACE }}
           
       - name: Deploy orders service
         run: |
-          kubectl apply -f Docker/orders/K8s/configmap.yaml
-          kubectl apply -f Docker/orders/K8s/secrets.yaml
-          kubectl apply -f Docker/orders/K8s/service.yaml
-          kubectl apply -f Docker/orders/K8s/deployment.yaml
-          kubectl apply -f Docker/orders/K8s/network-policy.yaml
+          kubectl apply -f Docker/orders/K8s/configmap.yaml -n ${{ env.K8S_NAMESPACE }}
+          # Create Kubernetes secrets securely using environment variables or Vault
+          # kubectl create secret generic orders-secrets --from-literal=DATABASE_PASSWORD=${{ secrets.ORDERS_DB_PASSWORD }} -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f Docker/orders/K8s/service.yaml -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f orders-deployment.yaml -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f Docker/orders/K8s/network-policy.yaml -n ${{ env.K8S_NAMESPACE }}
+          
+      - name: Deploy frontend
+        run: |
+          kubectl apply -f ecommerce-frontend/K8s/configmap.yaml -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f ecommerce-frontend/K8s/service.yaml -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f frontend-deployment.yaml -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f ecommerce-frontend/K8s/ingress.yaml -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f ecommerce-frontend/K8s/network-policy.yaml -n ${{ env.K8S_NAMESPACE }}
           
       - name: Verify deployment
         run: |
-          kubectl rollout status deployment/catalog-deployment -n microservices
-          kubectl rollout status deployment/orders-deployment -n microservices 
+          kubectl rollout status deployment/catalog-deployment -n ${{ env.K8S_NAMESPACE }}
+          kubectl rollout status deployment/orders-deployment -n ${{ env.K8S_NAMESPACE }}
+          kubectl rollout status deployment/frontend -n ${{ env.K8S_NAMESPACE }} 

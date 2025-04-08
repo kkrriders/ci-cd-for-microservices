@@ -18,3 +18,13 @@
 {"level":"info","message":"🚀 Orders Service running on port 8083","service":"orders-service","timestamp":"2025-03-22 16:58:57"}
 {"level":"info","message":"Health check available at http://localhost:8083/health","service":"orders-service","timestamp":"2025-03-22 16:58:57"}
 {"level":"info","message":"API Documentation available at http://localhost:8083/api/docs","service":"orders-service","timestamp":"2025-03-22 16:58:57"}
+{"level":"info","message":"📦 Connected to Redis","service":"orders-service","timestamp":"2025-04-01 10:16:44"}
+{"level":"info","message":"MongoDB Connected: mongo","service":"orders-service","timestamp":"2025-04-01 10:16:44"}
+{"level":"info","message":"🚀 Orders Service running on port 8083","service":"orders-service","timestamp":"2025-04-01 10:16:44"}
+{"level":"info","message":"Health check available at http://localhost:8083/health","service":"orders-service","timestamp":"2025-04-01 10:16:44"}
+{"level":"info","message":"API Documentation available at http://localhost:8083/api/docs","service":"orders-service","timestamp":"2025-04-01 10:16:44"}
+{"level":"info","message":"📦 Connected to Redis","service":"orders-service","timestamp":"2025-04-01 10:19:17"}
+{"level":"info","message":"MongoDB Connected: mongo","service":"orders-service","timestamp":"2025-04-01 10:19:17"}
+{"level":"info","message":"🚀 Orders Service running on port 8083","service":"orders-service","timestamp":"2025-04-01 10:19:17"}
+{"level":"info","message":"Health check available at http://localhost:8083/health","service":"orders-service","timestamp":"2025-04-01 10:19:17"}
+{"level":"info","message":"API Documentation available at http://localhost:8083/api/docs","service":"orders-service","timestamp":"2025-04-01 10:19:17"}

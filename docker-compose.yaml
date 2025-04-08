@@ -84,6 +84,32 @@ services:
       timeout: 10s
       retries: 3
 
+  frontend:
+    build:
+      context: ./ecommerce-frontend
+      dockerfile: Dockerfile
+    container_name: frontend-container
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_CATALOG_API_URL=http://catalog:8082/api/v1/catalog
+      - NEXT_PUBLIC_ORDERS_API_URL=http://orders:8083/api/v1/orders
+    volumes:
+      - ./ecommerce-frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - catalog
+      - orders
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   mongo-express:
     image: mongo-express
     container_name: mongo-express
