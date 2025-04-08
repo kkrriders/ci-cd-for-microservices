@@ -42,8 +42,8 @@ export function MobileNav() {
       label: "Orders",
     },
     {
-      href: "/wishlist",
-      label: "Wishlist",
+      href: "/favorites",
+      label: "Favorites",
     },
     {
       href: "/cart",

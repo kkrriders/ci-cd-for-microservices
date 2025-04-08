@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { MainNav } from "@/components/main-nav"
 import { CartCounter } from "@/features/cart/cart-counter"
+import { FavoritesCounter } from "@/components/favorites-counter"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { MobileNav } from "@/components/mobile-nav"
 
@@ -38,10 +39,11 @@ export function SiteHeader() {
             <Input type="search" placeholder="Search products..." className="w-[200px] lg:w-[300px] pl-8" />
           </div>
           <ModeToggle />
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/wishlist">
+          <Button variant="ghost" size="icon" asChild className="relative">
+            <Link href="/favorites">
               <Heart className="h-5 w-5" />
-              <span className="sr-only">Wishlist</span>
+              <FavoritesCounter />
+              <span className="sr-only">Favorites</span>
             </Link>
           </Button>
           <Button variant="ghost" size="icon" asChild>

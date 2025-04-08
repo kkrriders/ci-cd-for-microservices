@@ -24,13 +24,27 @@ import { Badge } from "@/components/ui/badge"
 import { formatPrice } from "@/lib/utils"
 import { Heart } from "lucide-react"
 
-export function ProductGrid() {
+interface ProductGridProps {
+  category?: string;
+  onSale?: boolean;
+  isNew?: boolean;
+  featured?: boolean;
+  searchTerm?: string;
+}
+
+export function ProductGrid({ 
+  category, 
+  onSale = false, 
+  isNew = false, 
+  featured = false,
+  searchTerm = ""
+}: ProductGridProps) {
   const [products, setProducts] = useState<Product[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<"grid" | "list">("grid")
   const [sortBy, setSortBy] = useState("featured")
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState(searchTerm)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 9
 
@@ -41,7 +55,35 @@ export function ProductGrid() {
       try {
         const allProducts = await getProducts()
         setProducts(allProducts)
-        setFilteredProducts(allProducts)
+        
+        // Apply initial filters based on props
+        let initialFiltered = [...allProducts];
+        
+        // Filter by category if provided
+        if (category) {
+          initialFiltered = initialFiltered.filter(product => 
+            product.category.toLowerCase() === category.toLowerCase()
+          );
+        }
+        
+        // Filter by sale status if requested
+        if (onSale) {
+          initialFiltered = initialFiltered.filter(product => 
+            product.isOnSale || product.discount > 0
+          );
+        }
+        
+        // Filter by new items if requested
+        if (isNew) {
+          initialFiltered = initialFiltered.filter(product => product.isNew);
+        }
+        
+        // Filter by featured items if requested
+        if (featured) {
+          initialFiltered = initialFiltered.filter(product => product.isFeatured);
+        }
+        
+        setFilteredProducts(initialFiltered);
       } catch (error) {
         console.error("Failed to load products:", error)
       } finally {
@@ -50,24 +92,69 @@ export function ProductGrid() {
     }
 
     loadProducts()
-  }, [])
+  }, [category, onSale, isNew, featured])
 
   useEffect(() => {
     // Filter products based on search query
     if (debouncedSearchQuery.trim() === "") {
-      setFilteredProducts(products)
+      // Apply only the category/sale/new/featured filters without search
+      let currentFiltered = [...products];
+      
+      if (category) {
+        currentFiltered = currentFiltered.filter(product => 
+          product.category.toLowerCase() === category.toLowerCase()
+        );
+      }
+      
+      if (onSale) {
+        currentFiltered = currentFiltered.filter(product => 
+          product.isOnSale || product.discount > 0
+        );
+      }
+      
+      if (isNew) {
+        currentFiltered = currentFiltered.filter(product => product.isNew);
+      }
+      
+      if (featured) {
+        currentFiltered = currentFiltered.filter(product => product.isFeatured);
+      }
+      
+      setFilteredProducts(currentFiltered);
     } else {
-      const filtered = products.filter(
+      // Apply search filter along with category/sale/new/featured filters
+      let searchFiltered = products.filter(
         (product) =>
           product.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
           product.description.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-          product.category.toLowerCase().includes(debouncedSearchQuery.toLowerCase()),
-      )
-      setFilteredProducts(filtered)
+          product.category.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
+      );
+      
+      if (category) {
+        searchFiltered = searchFiltered.filter(product => 
+          product.category.toLowerCase() === category.toLowerCase()
+        );
+      }
+      
+      if (onSale) {
+        searchFiltered = searchFiltered.filter(product => 
+          product.isOnSale || product.discount > 0
+        );
+      }
+      
+      if (isNew) {
+        searchFiltered = searchFiltered.filter(product => product.isNew);
+      }
+      
+      if (featured) {
+        searchFiltered = searchFiltered.filter(product => product.isFeatured);
+      }
+      
+      setFilteredProducts(searchFiltered);
     }
     // Reset to first page when search changes
     setCurrentPage(1)
-  }, [debouncedSearchQuery, products])
+  }, [debouncedSearchQuery, products, category, onSale, isNew, featured])
 
   useEffect(() => {
     // Sort products when sortBy changes
@@ -108,11 +195,20 @@ export function ProductGrid() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
+  // Determine the title based on props
+  const getTitle = () => {
+    if (category) return `${category.charAt(0).toUpperCase() + category.slice(1)} Products`;
+    if (onSale) return "Sale Items";
+    if (isNew) return "New Arrivals"; 
+    if (featured) return "Featured Products";
+    return "All Products";
+  }
+
   return (
     <div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
         <div className="mb-4 sm:mb-0">
-          <h1 className="text-2xl font-bold">All Products</h1>
+          <h1 className="text-2xl font-bold">{getTitle()}</h1>
           <p className="text-muted-foreground">{filteredProducts.length} products available</p>
         </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full sm:w-auto">
@@ -249,27 +345,37 @@ export function ProductGrid() {
           )}
         </>
       ) : (
-        <>
-          <div className="space-y-4">
-            {currentItems.map((product) => (
-              <div key={product.id} className="flex flex-col sm:flex-row border rounded-lg overflow-hidden">
-                <div className="w-full sm:w-1/3 aspect-square">
-                  <img
-                    src={product.images[0] || "/placeholder.svg?height=300&width=300"}
-                    alt={product.name}
-                    className="object-cover w-full h-full"
-                    loading="lazy"
-                  />
-                </div>
-                <div className="p-4 flex flex-col justify-between w-full sm:w-2/3">
-                  <div>
-                    <h3 className="font-medium text-lg">{product.name}</h3>
-                    <div className="flex items-center mt-1 mb-2">
+        <div className="space-y-4">
+          {currentItems.map((product) => (
+            <div
+              key={product.id}
+              className="flex flex-col md:flex-row border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+            >
+              <div className="w-full md:w-1/4 relative">
+                <img
+                  src={product.images[0] || "/placeholder.svg?height=200&width=200"}
+                  alt={product.name}
+                  className="h-48 md:h-full w-full object-cover"
+                  loading="lazy"
+                />
+                {product.isNew && <Badge className="absolute top-2 left-2">New</Badge>}
+                {product.discount > 0 && (
+                  <Badge variant="destructive" className="absolute top-2 right-2">
+                    {product.discount}% OFF
+                  </Badge>
+                )}
+              </div>
+              <div className="w-full md:w-3/4 p-4 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-medium text-lg mb-1">{product.name}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">{product.description}</p>
+                  <div className="flex items-center mb-2">
+                    <div className="flex items-center mr-2">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <svg
                           key={i}
-                          className={`h-4 w-4 ${
-                            i < product.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-300"
+                          className={`w-4 h-4 ${
+                            i < Math.floor(product.rating) ? "text-yellow-400 fill-current" : "text-gray-300 fill-current"
                           }`}
                           xmlns="http://www.w3.org/2000/svg"
                           viewBox="0 0 24 24"
@@ -277,59 +383,27 @@ export function ProductGrid() {
                           <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                         </svg>
                       ))}
-                      <span className="text-xs text-muted-foreground ml-1">({product.reviewCount})</span>
                     </div>
-                    <p className="text-muted-foreground mt-2">{product.description}</p>
-
-                    {product.isNew && <Badge className="mt-2">New</Badge>}
-                  </div>
-                  <div className="flex items-center justify-between mt-4">
-                    <div className="flex items-center gap-1">
-                      {product.discount > 0 ? (
-                        <>
-                          <span className="font-bold text-lg">
-                            {formatPrice(product.price * (1 - product.discount / 100))}
-                          </span>
-                          <span className="text-sm text-muted-foreground line-through">
-                            {formatPrice(product.price)}
-                          </span>
-                          <Badge variant="destructive" className="ml-2">
-                            {product.discount}% OFF
-                          </Badge>
-                        </>
-                      ) : (
-                        <span className="font-bold text-lg">{formatPrice(product.price)}</span>
-                      )}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          // Add to wishlist logic
-                        }}
-                      >
-                        <Heart className="h-4 w-4 mr-1" />
-                        Wishlist
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          // Add to cart logic
-                        }}
-                      >
-                        Add to Cart
-                      </Button>
-                    </div>
+                    <span className="text-sm text-muted-foreground">({product.reviews} reviews)</span>
                   </div>
                 </div>
+                <div className="flex items-center justify-between mt-4">
+                  <div className="flex items-center gap-2">
+                    {product.discount > 0 ? (
+                      <>
+                        <span className="font-bold text-lg">{formatPrice(product.price * (1 - product.discount / 100))}</span>
+                        <span className="text-sm text-muted-foreground line-through">{formatPrice(product.price)}</span>
+                      </>
+                    ) : (
+                      <span className="font-bold text-lg">{formatPrice(product.price)}</span>
+                    )}
+                    {product.freeShipping && <Badge variant="outline">Free Shipping</Badge>}
+                  </div>
+                  <Button>Add to Cart</Button>
+                </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
 
           {totalPages > 1 && (
             <Pagination className="mt-8">
@@ -385,7 +459,7 @@ export function ProductGrid() {
               </PaginationContent>
             </Pagination>
           )}
-        </>
+        </div>
       )}
     </div>
   )

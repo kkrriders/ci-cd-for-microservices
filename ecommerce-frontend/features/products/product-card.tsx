@@ -12,15 +12,19 @@ import { useCart } from "@/features/cart/use-cart"
 import { formatPrice, truncateText } from "@/lib/utils"
 import { useState } from "react"
 import { useToast } from "@/hooks/use-toast"
+import { useFavorites } from "@/hooks/use-favorites"
+import { cn } from "@/lib/utils"
 
 interface ProductCardProps {
   product: Product
+  className?: string
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, className }: ProductCardProps) {
   const { addItem } = useCart()
   const { toast } = useToast()
-  const [isWishlisted, setIsWishlisted] = useState(false)
+  const { favorites, toggleFavorite } = useFavorites()
+  const [isWishlisted, setIsWishlisted] = useState(favorites.includes(product.id))
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -32,22 +36,30 @@ export function ProductCard({ product }: ProductCardProps) {
     })
   }
 
-  const toggleWishlist = (e: React.MouseEvent) => {
+  const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    setIsWishlisted(!isWishlisted)
-
+    
+    toggleFavorite(product.id)
+    
     toast({
-      title: isWishlisted ? "Removed from wishlist" : "Added to wishlist",
-      description: `${product.name} has been ${isWishlisted ? "removed from" : "added to"} your wishlist.`,
+      title: isWishlisted ? "Removed from favorites" : "Added to favorites",
+      description: isWishlisted 
+        ? `${product.name} has been removed from your favorites`
+        : `${product.name} has been added to your favorites`,
+      duration: 2000,
     })
   }
 
   const discountedPrice = product.discount > 0 ? product.price * (1 - product.discount / 100) : product.price
 
+  const discount = product.originalPrice 
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) 
+    : 0
+
   return (
-    <Link href={`/products/${product.id}`}>
-      <Card className="h-full overflow-hidden transition-all hover:shadow-lg">
+    <Card className={cn("h-full overflow-hidden transition-all hover:shadow-lg", className)}>
+      <Link href={`/products/${product.id}`}>
         <div className="relative">
           <CardContent className="p-0">
             <div className="aspect-square relative overflow-hidden">
@@ -64,16 +76,16 @@ export function ProductCard({ product }: ProductCardProps) {
                 {product.discount}% OFF
               </Badge>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-2 right-2 rounded-full bg-background/80 hover:bg-background/90"
-              onClick={toggleWishlist}
-              aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            <button
+              className={cn(
+                "absolute top-2 right-2 p-1.5 rounded-full bg-white/80 backdrop-blur-sm shadow-sm hover:bg-white transition-colors",
+                isWishlisted ? "text-red-500" : "text-gray-500"
+              )}
+              onClick={handleFavoriteClick}
+              aria-label={isWishlisted ? "Remove from favorites" : "Add to favorites"}
             >
-              <Heart className={`h-4 w-4 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`} />
-              <span className="sr-only">{isWishlisted ? "Remove from wishlist" : "Add to wishlist"}</span>
-            </Button>
+              <Heart className={cn("h-4 w-4", isWishlisted ? "fill-current" : "")} />
+            </button>
           </CardContent>
           <CardFooter className="flex flex-col items-start p-4">
             <div className="space-y-1 mb-2 w-full">
@@ -97,8 +109,8 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
           </CardFooter>
         </div>
-      </Card>
-    </Link>
+      </Link>
+    </Card>
   )
 }
 
