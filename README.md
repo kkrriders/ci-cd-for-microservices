@@ -1,6 +1,6 @@
 # Microservices E-Commerce Platform
 
-A comprehensive e-commerce platform built using a microservices architecture. This project demonstrates the implementation of multiple services (Catalog and Orders) that work together to provide a scalable, maintainable, and resilient e-commerce backend.
+A comprehensive e-commerce platform built using a microservices architecture. This project demonstrates the implementation of multiple services (Catalog and Orders) that work together to provide a scalable, maintainable, and resilient e-commerce backend, along with a modern frontend built with Next.js.
 
 ![Microservices Architecture](https://via.placeholder.com/800x400?text=Microservices+Architecture)
 
@@ -10,6 +10,7 @@ A comprehensive e-commerce platform built using a microservices architecture. Th
 - [Technology Stack](#technology-stack)
 - [Directory Structure](#directory-structure)
 - [Services](#services)
+- [Frontend](#frontend)
 - [Getting Started](#getting-started)
 - [API Documentation](#api-documentation)
 - [Health Monitoring](#health-monitoring)
@@ -26,6 +27,7 @@ This project implements a microservices architecture with the following componen
 
 - **Catalog Service**: Manages product information and inventory
 - **Orders Service**: Handles order processing and management
+- **Frontend**: Next.js application for the user interface
 - **MongoDB**: Database for persistent storage
 - **Redis**: Caching layer for improved performance
 - **Docker & Docker Compose**: For containerization and local development
@@ -45,6 +47,13 @@ The services communicate with each other via REST APIs and are designed to be in
 - **Joi/Express-Validator**: Request validation
 - **Swagger**: API documentation
 
+### Frontend
+- **Next.js**: React framework
+- **TypeScript**: Typed JavaScript
+- **Tailwind CSS**: Utility-first CSS framework
+- **shadcn/ui**: Reusable UI components
+- **React Context API**: State management
+
 ### DevOps & Infrastructure
 - **Docker**: Containerization
 - **Docker Compose**: Local multi-container orchestration
@@ -59,7 +68,7 @@ The services communicate with each other via REST APIs and are designed to be in
 ## Directory Structure
 
 ```
-├── Docker/                # Contains all microservices
+├── Docker/                # Contains backend microservices
 │   ├── catalog/           # Catalog service
 │   │   ├── src/           # Source code
 │   │   │   ├── config/    # Configuration files
@@ -81,7 +90,20 @@ The services communicate with each other via REST APIs and are designed to be in
 │       ├── init-mongo.js  # DB setup script
 │       ├── catalog.json   # Sample catalog data
 │       └── orders.json    # Sample orders data
+├── ecommerce-frontend/    # Frontend Next.js application
+│   ├── app/               # Application routes and pages
+│   │   ├── categories/    # Category pages
+│   │   ├── products/      # Product pages
+│   │   ├── favorites/     # Favorites page
+│   │   ├── sales/         # Sales and promotions page
+│   │   └── cart/          # Shopping cart page
+│   ├── components/        # Reusable UI components
+│   ├── features/          # Feature-specific components
+│   ├── hooks/             # Custom React hooks
+│   ├── K8s/               # Kubernetes manifests
+│   └── Dockerfile         # Container definition
 ├── docker-compose.yaml    # Docker Compose configuration
+├── .github/workflows/     # GitHub Actions workflow files
 └── README.md              # Project documentation
 ```
 
@@ -120,6 +142,23 @@ Redis is used as a caching layer to improve performance and reduce database load
 A web-based MongoDB admin interface for easier database management during development.
 
 **Port**: 8081
+
+## Frontend
+
+The frontend is a modern e-commerce store built with Next.js, providing a responsive and user-friendly shopping experience.
+
+### Key Features
+
+- **Category Navigation**: Browse products by category with dedicated pages for Electronics, Clothing, and Home & Garden
+- **Product Listings**: View products with filtering, sorting, and search capabilities
+- **Product Details**: Detailed product pages with images, descriptions, pricing, and reviews
+- **Favorites/Wishlist**: Save items to favorites for later viewing
+- **Shopping Cart**: Add items to cart and proceed to checkout
+- **Sales & Promotions**: Browse current and upcoming sales
+- **Responsive Design**: Fully responsive for mobile, tablet, and desktop
+- **Dark/Light Mode**: Toggle between dark and light themes
+
+**Port**: 3000
 
 ## Getting Started
 
@@ -160,11 +199,17 @@ npm run start:catalog
 # Start orders service
 npm run start:orders
 
+# Start frontend 
+npm run start:frontend
+
 # Run catalog service in development mode
 npm run dev:catalog
 
 # Run orders service in development mode
 npm run dev:orders
+
+# Run frontend in development mode
+npm run dev:frontend
 ```
 
 ### Environment Variables
@@ -186,6 +231,14 @@ NODE_ENV=development
 MONGODB_URI=mongodb://root:example@mongo:27017/Services_db?authSource=admin
 REDIS_URI=redis://redis:6379
 CATALOG_SERVICE_URL=http://catalog:8082
+```
+
+**Frontend**
+```
+NODE_ENV=development
+CATALOG_API_URL=http://localhost:8082/api/v1/catalog
+ORDERS_API_URL=http://localhost:8083/api/v1/orders
+ALLOWED_ORIGINS=https://ecommerce.example.com
 ```
 
 ## API Documentation
@@ -218,6 +271,7 @@ Health check endpoints are available for monitoring service status:
 
 - **Catalog Health**: http://localhost:8082/health
 - **Orders Health**: http://localhost:8083/health
+- **Frontend Health**: http://localhost:3000/health
 
 Each service provides the following health endpoints:
 
@@ -240,6 +294,11 @@ npm run dev
 cd Docker/orders
 npm install
 npm run dev
+
+# Frontend
+cd ecommerce-frontend
+npm install
+npm run dev
 ```
 
 ### Running Tests
@@ -252,6 +311,10 @@ npm test
 # Orders Service
 cd Docker/orders
 npm test
+
+# Frontend
+cd ecommerce-frontend
+npm test
 ```
 
 ### Code Linting
@@ -263,6 +326,10 @@ npm run lint
 
 # Orders Service
 cd Docker/orders
+npm run lint
+
+# Frontend
+cd ecommerce-frontend
 npm run lint
 ```
 
@@ -279,6 +346,9 @@ kubectl apply -f Docker/catalog/K8s/
 
 # Deploy orders service
 kubectl apply -f Docker/orders/K8s/
+
+# Deploy frontend
+kubectl apply -f ecommerce-frontend/K8s/
 ```
 
 ### Kubernetes Resources
@@ -289,6 +359,7 @@ Each service includes the following Kubernetes resources:
 - **Secret**: Sensitive data like database credentials
 - **Deployment**: Pod configuration with replicas
 - **Service**: Network access to pods
+- **NetworkPolicy**: Network security
 
 ### Accessing Services in Kubernetes
 
@@ -298,19 +369,20 @@ After deployment, services are accessible within the Kubernetes cluster or throu
 # Port forward to access locally
 kubectl port-forward -n microservices svc/catalog-service 8082:8082
 kubectl port-forward -n microservices svc/orders-service 8083:8083
+kubectl port-forward -n microservices svc/frontend-service 3000:80
 ```
 
 ## CI/CD Integration
 
-This project can be integrated with CI/CD pipelines using GitHub Actions, Jenkins, or other CI tools. A typical pipeline would include:
+This project uses GitHub Actions for CI/CD pipelines. The pipeline includes:
 
 1. **Build**: Compile code and build Docker images
 2. **Test**: Run unit and integration tests
-3. **Scan**: Security and dependency scanning
-4. **Push**: Push Docker images to a registry
+3. **Scan**: Security and dependency scanning with Trivy
+4. **Push**: Push Docker images to GitHub Container Registry
 5. **Deploy**: Deploy to Kubernetes
 
-Example GitHub Actions workflow files are provided in the `.github/workflows` directory.
+Workflow files are provided in the `.github/workflows` directory.
 
 ## Security
 
@@ -374,6 +446,49 @@ Verify database connection
 Check environment variables are set correctly
 ```
 
+**Frontend Issues**
+```
+Check browser console for errors
+Verify API endpoints are correctly configured in Next.js
+Ensure environment variables are properly set
+```
+
+## Recent Frontend Enhancements
+
+The following improvements were recently made to the ecommerce frontend:
+
+### New Category Pages
+- Added dedicated pages for Electronics, Clothing, and Home & Garden categories
+- Implemented proper product filtering by category
+- Added category-specific filters and sorting options
+- Created a unified categories index page
+
+### Sales and Promotions
+- Added a dedicated Sales page with current, flash, and upcoming promotions
+- Implemented interactive tabs for different types of sales
+- Added visual countdown timers for time-limited offers
+- Featured sale items displayed with discount badges
+
+### Favorites/Wishlist Feature
+- Implemented a favorites system with heart icon in product cards
+- Added a dedicated Favorites page showing all saved items
+- Created a counter badge in the header showing the number of favorited items
+- Implemented persistent storage using localStorage
+- Added loading states and empty state handling
+
+### UI Enhancements
+- Created reusable EmptyState component for better UX
+- Updated main navigation and header for better organization
+- Improved product display with grid and list view options
+- Enhanced mobile navigation with reorganized menu items
+- Added visual indicators for product status (sale, new, out of stock)
+
+### Performance Improvements
+- Optimized Docker images with production-only dependencies
+- Enabled Next.js image optimization for better performance
+- Added skeleton loading states for better perceived performance
+- Implemented proper CORS configuration for API requests
+
 ## Contributing
 
 1. Fork the repository
@@ -394,5 +509,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Express.js documentation and community
 - MongoDB documentation and community
+- Next.js documentation and examples
 - Kubernetes documentation
 - Docker documentation
